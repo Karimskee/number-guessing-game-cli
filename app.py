@@ -48,7 +48,7 @@ def get_difficulty():
     print()
     global round_difficulty
 
-    print("Please select the diffc level:")
+    print("Please select the difficulty level:")
     for i, diff in difficulty_levels.items(): 
         print(f"{i}. {diff.get('title')} ({diff.get('chances')} chance/s)")
     print()
@@ -76,7 +76,8 @@ def guessing_game():
     print()
     chances = round_difficulty.get("chances")
     random_number = randint(1, 100)
-    attempts = 0
+    print(random_number)
+    attempts = 1
 
     while chances > 0:
         print(f"Remaining chances: {chances}")
@@ -130,7 +131,23 @@ def win(attempts: int):
 
 
 def play_again():
-    pass
+    print()
+    while True:
+        choice = input("Give it another shot? Y/N\n").strip().lower()
+
+        if choice == 'y':
+            get_difficulty()
+        elif choice == 'n':
+            print()
+            print("Sorry for wasting your time :>")
+            print("Have a great day!")
+            break
+        else:
+            print()
+            print("Invalid choice.")
+            print("It's clear enough that it's whether Y or N!")
+            print("How could you fail to get that!")
+            print()
 
 
 def high_score():
