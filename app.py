@@ -8,6 +8,7 @@ continue until the user runs out of chances.
 """
 
 from helpers import clear_terminal
+from random import randint
 
 
 # Difficulties dictionary
@@ -41,10 +42,10 @@ def welcome():
     print("Welcome to the Number Guessing Game!")
     print("I'm thinking of a number between 1 and 100.")
     print("You have some number of chances to guess the correct number.")
-    print()
 
 
 def get_difficulty():
+    print()
     global round_difficulty
 
     print("Please select the diffc level:")
@@ -63,8 +64,6 @@ def get_difficulty():
             if (1 <= chosen_difficulty <= len(difficulty_levels)):
                 round_difficulty = difficulty_levels.get(chosen_difficulty)
                 print("Round difficulty level has been set.")
-                print(f"You have {round_difficulty.get('chances')} chance/s.")
-                print()
                 break
         
         print()
@@ -74,19 +73,60 @@ def get_difficulty():
 
 
 def guessing_game():
-    pass
+    print()
+    chances = round_difficulty.get("chances")
+    random_number = randint(1, 100)
+    attempts = 0
+
+    while chances > 0:
+        print(f"Remaining chances: {chances}")
+        guessed_number = input("Enter your guess: ").strip()
+
+        try:
+            guessed_number = int(guessed_number)
+        except ValueError:
+            invalid_guessed_number()
+            continue
+        else:
+            if guessed_number < 1 or guessed_number > 100:
+                invalid_guessed_number()
+                continue
+            
+            if guessed_number == random_number:
+                win(attempts)
+                break
+            else:
+                print()
+                print(f"Incorrect! The number is {'greater' if random_number > guessed_number else 'less'} than {guessed_number}.")
+                print()
+                attempts += 1
+                chances -= 1
+                continue
+
+    if guessed_number != random_number:
+        loss(random_number)
+
+
+def invalid_guessed_number():
+    print()
+    print("Invalid input.")
+    print("Please enter a numeric value in the range of [1, 100].")
+    print()
 
 
 def hint():
     pass
 
 
-def loss():
-    pass
+def loss(random_number):
+    print("You have lost!")
+    print(f"The number was {random_number}")
 
 
-def win():
-    pass
+def win(attempts: int):
+    print()
+    print(f"Congratulations! You guessed the correct number in {attempts} attempt/s.")
+    play_again()
 
 
 def play_again():
