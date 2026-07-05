@@ -7,12 +7,16 @@ correctly, the game will end, and the user will win. Otherwise, the game will
 continue until the user runs out of chances.
 """
 
+from helpers import clear_terminal
+
 
 def main():
     """Main program flow."""
+    clear_terminal()
     welcome()
     difficulty()
     guessing_game()
+    print("\n")
 
 
 def welcome():
