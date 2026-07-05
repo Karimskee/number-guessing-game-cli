@@ -20,7 +20,9 @@ def main():
 
 
 def welcome():
-    pass
+    print("Welcome to the Number Guessing Game!")
+    print("I'm thinking of a number between 1 and 100.")
+    print("You have some number of chances to guess the correct number.")
 
 
 def difficulty():
