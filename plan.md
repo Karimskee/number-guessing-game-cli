@@ -32,3 +32,7 @@
     <tr><td>Git/GitHub</td> <td>version control</td></tr>
 </tbody>
 </table>
+
+## Improvements
+- ANSII formatting
+- CLI keyboard selection
