@@ -5,6 +5,11 @@
 [✅] Timer system
 [✅] Hint system
 
+## Extra features
+[] Use a CLI formatter library
+[] Transform the app into a pure CLI application, installable via pip
+[] CLI keyboard selection
+
 ## User flow
 1. Welcome message
 2. Difficulty selection
@@ -32,7 +37,3 @@
     <tr><td>Git/GitHub</td> <td>version control</td></tr>
 </tbody>
 </table>
-
-## Improvements
-- ANSII formatting
-- CLI keyboard selection
