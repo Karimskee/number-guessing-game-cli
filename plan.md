@@ -3,7 +3,7 @@
 [✅] Multiple rounds until quit
 [] High score
 [✅] Timer system
-[] Hint system
+[✅] Hint system
 
 ## User flow
 1. Welcome message
