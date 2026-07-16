@@ -9,6 +9,7 @@ continue until the user runs out of chances.
 
 from helpers import clear_terminal
 from random import randint
+import time
 
 
 # Difficulties dictionary
@@ -78,6 +79,9 @@ def guessing_game():
     random_number = randint(1, 100)
     print(random_number)
     attempts = 1
+    is_won = False
+
+    time_before_round = time.perf_counter()
 
     while chances > 0:
         print(f"Remaining chances: {chances}")
@@ -94,7 +98,7 @@ def guessing_game():
                 continue
             
             if guessed_number == random_number:
-                win(attempts)
+                is_won = True
                 break
             else:
                 print()
@@ -104,7 +108,12 @@ def guessing_game():
                 chances -= 1
                 continue
 
-    if guessed_number != random_number:
+    time_after_round = time.perf_counter()
+    round_time = time_after_round - time_before_round
+
+    if is_won:
+        win(attempts, round_time)
+    else:
         loss(random_number)
 
 
@@ -120,13 +129,16 @@ def hint():
 
 
 def loss(random_number):
+    print()
     print("You have lost!")
     print(f"The number was {random_number}")
+    play_again()
 
 
-def win(attempts: int):
+def win(attempts: int, round_time: float):
     print()
     print(f"Congratulations! You guessed the correct number in {attempts} attempt/s.")
+    print(f"Time taken: {round_time:.2f} seconds.")
     play_again()
 
 
@@ -137,6 +149,7 @@ def play_again():
 
         if choice == 'y':
             get_difficulty()
+            guessing_game()
         elif choice == 'n':
             print()
             print("Sorry for wasting your time :>")
@@ -153,9 +166,6 @@ def play_again():
 def high_score():
     pass
 
-
-def timer():
-    pass
 
 
 if __name__ == "__main__":
