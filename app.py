@@ -10,6 +10,7 @@ continue until the user runs out of chances.
 from helpers import clear_terminal
 from random import randint
 import time
+from math import floor
 
 
 # Difficulties dictionary
@@ -28,6 +29,8 @@ difficulty_levels = {
     },
 }
 round_difficulty = dict() # Chosen difficulty level for each round
+
+hint_on_chance = -1 # Give a hint once rem chances is equal to this value
 
 
 def main():
@@ -75,9 +78,11 @@ def get_difficulty():
 
 def guessing_game():
     print()
+    global hint_on_chance
+    hint_on_chance = -1
     chances = round_difficulty.get("chances")
-    random_number = randint(1, 100)
-    print(random_number)
+    target_number = randint(1, 100)
+    print(target_number)
     attempts = 1
     is_won = False
 
@@ -85,6 +90,7 @@ def guessing_game():
 
     while chances > 0:
         print(f"Remaining chances: {chances}")
+        hint(target_number, round_difficulty, chances) # If a hint is available
         guessed_number = input("Enter your guess: ").strip()
 
         try:
@@ -97,12 +103,12 @@ def guessing_game():
                 invalid_guessed_number()
                 continue
             
-            if guessed_number == random_number:
+            if guessed_number == target_number:
                 is_won = True
                 break
             else:
                 print()
-                print(f"Incorrect! The number is {'greater' if random_number > guessed_number else 'less'} than {guessed_number}.")
+                print(f"Incorrect! The number is {'greater' if target_number > guessed_number else 'less'} than {guessed_number}.")
                 print()
                 attempts += 1
                 chances -= 1
@@ -114,7 +120,7 @@ def guessing_game():
     if is_won:
         win(attempts, round_time)
     else:
-        loss(random_number)
+        loss(target_number)
 
 
 def invalid_guessed_number():
@@ -124,8 +130,25 @@ def invalid_guessed_number():
     print()
 
 
-def hint():
-    pass
+def hint(target_num: int, round_difficulty: dict, rem_chances: int):
+    global hint_on_chance
+    total_chances = round_difficulty.get("chances")
+
+    # If hint_on_chance is not determined, give it a rand value
+    if hint_on_chance == -1 and rem_chances <= total_chances / 2:
+        hint_on_chance = randint(1, floor(total_chances / 2))
+        print(hint_on_chance)
+
+    # Give a hint if hint is in this chance
+    if rem_chances == hint_on_chance:
+        target_num_str = str(target_num)
+        num_digits = len(target_num_str)
+        rand_digit = target_num_str[randint(0, num_digits - 1)]
+        
+        if num_digits == 1:
+            print(f"Hint: The target number is of {num_digits} digit.")
+        else:
+            print(f"Hint: The target number is of {num_digits} digit/s, one of which is {rand_digit}.")
 
 
 def loss(random_number):
