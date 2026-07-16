@@ -150,6 +150,7 @@ def play_again():
         if choice == 'y':
             get_difficulty()
             guessing_game()
+            break
         elif choice == 'n':
             print()
             print("Sorry for wasting your time :>")
