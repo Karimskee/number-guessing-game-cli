@@ -1,8 +1,8 @@
 ## Features
-[] Core game with 3 difficulties
-[] Multiple rounds until quit
+[✅] Core game with 3 difficulties
+[✅] Multiple rounds until quit
 [] High score
-[] Timer system
+[✅] Timer system
 [] Hint system
 
 ## User flow
