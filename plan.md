@@ -1,7 +1,7 @@
 ## Features
 [✅] Core game with 3 difficulties
 [✅] Multiple rounds until quit
-[] High score
+[✅] High score
 [✅] Timer system
 [✅] Hint system
 
