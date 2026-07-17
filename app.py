@@ -11,21 +11,26 @@ from helpers import clear_terminal
 from random import randint
 import time
 from math import floor
+import json
+from getpass import getuser
 
 
 # Difficulties dictionary
 difficulty_levels = {
     1: {
         "title": "Easy",
-        "chances": 10
+        "chances": 10,
+        "multiplier": 1
     },
     2: {
         "title": "Medium",
-        "chances": 5
+        "chances": 5,
+        "multiplier": 2
     },
     3: {
         "title": "Hard",
-        "chances": 3
+        "chances": 3,
+        "multiplier": 3
     },
 }
 round_difficulty = dict() # Chosen difficulty level for each round
@@ -162,6 +167,7 @@ def win(attempts: int, round_time: float):
     print()
     print(f"Congratulations! You guessed the correct number in {attempts} attempt/s.")
     print(f"Time taken: {round_time:.2f} seconds.")
+    score(attempts, round_time)
     play_again()
 
 
@@ -187,9 +193,57 @@ def play_again():
             print()
 
 
-def high_score():
-    pass
+def score(attempts: int, round_time: float):
+    SCORES_FILE = "scores.json"
+    
+    # Calculate score
+    multiplier = round_difficulty.get("multiplier")
+    score = round(1 / (attempts * round_time) * 100 * multiplier, 2)
 
+    # Print score
+    print(f"Your score is: {score} pts.")
+
+    print()
+
+    # Retrieve scores data
+    # # Ensure file exists
+    try:
+        open(file=SCORES_FILE, mode="r", encoding="utf-8")
+    except FileNotFoundError:
+        file = open(file=SCORES_FILE, mode="w", encoding="utf-8")
+        json.dump(fp=file, obj=[])
+
+    # Get scores
+    with open(file=SCORES_FILE, mode="r", encoding="utf-8") as file:
+        try:
+            all_scores = json.load(fp=file)
+        except json.decoder.JSONDecodeError:
+            all_scores = []
+
+    # If a new high score
+    if len(all_scores) > 0:
+        highest_score = all_scores[0].get("score")
+        
+        if score > highest_score:
+            print("You have got a new high score!")
+        elif score == highest_score:
+            print("Woh, you have got the exact same score as the current highest one!")
+            print("That's a very rare chance, you are a lucky one!")
+
+    # Insert score
+    all_scores.append({"username": getuser(), "score": score})
+
+    # Sort scores
+    all_scores.sort(key=lambda x: x.get("score"), reverse=True)
+
+    # Save score
+    with open(file=SCORES_FILE, mode="w", encoding="utf-8") as file:
+        try:
+            json.dump(obj=all_scores, fp=file, indent=4)
+        except:
+            print("Sorry, we couldn't save your score.")
+        else:
+            print(f"Score has been saved with the name: {getuser()}")
 
 
 if __name__ == "__main__":
