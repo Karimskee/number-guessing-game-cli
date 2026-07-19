@@ -1,0 +1,28 @@
+Label {
+    width: 100%;
+    text-align: center;
+}
+
+Button {
+    width: 16;
+    text-align: center;
+    margin: 0 5;
+}
+
+WelcomeScreen {
+    VerticalScroll {
+        align: center middle;
+        .header, .explain, .prompt {
+            margin: 2 0;
+        }
+    
+        .difficulty-prompt {
+            margin: 1 0;
+        }
+    
+        .difficulty-options {
+            margin: 1 0;
+            align: center middle;
+        }
+    }
+}
