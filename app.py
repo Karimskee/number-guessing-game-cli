@@ -14,7 +14,7 @@ from textual.app import App, ComposeResult
 from textual.screen import Screen
 from textual.reactive import reactive
 from textual.containers import HorizontalGroup, VerticalScroll, VerticalGroup, Horizontal
-from textual.widgets import Static, MaskedInput, Input, Select, Button, Label, Footer, Header, Digits, ListView, ListItem
+from textual.widgets import Static, MaskedInput, Input, Select, Button, Label, Footer, Header, Digits, ListView, ListItem, RadioSet, RadioButton
 
 from getpass import getuser  # Getting system username
 import json
@@ -185,27 +185,29 @@ class WinScreen(Screen):
 
     def compose(self) -> ComposeResult:
         """Called to add widgets to this container."""
+        yield Label(f"Remaining Chances: {self.rem_chances}", id="remaining-chances", classes="remaining-chances")
 
-        with VerticalScroll():
-
-            yield Label(f"Remaining Chances: {self.rem_chances}", id="remaining-chances", classes="remaining-chances")
+        with VerticalScroll(id="screen-container", classes="screen-container"):
 
             with VerticalGroup(id="win-msg-container", classes="win-msg-container"):
                 at = self.attempts
                 yield Label(f"Congratulations you won!\nYou guessed the correct number in {at} {"attempt" if at == 1 else "attempts"}.", id="win-msg", classes="win-msg")
 
             with VerticalGroup(id="play-again-container", classes="play-again-container"):
-                yield Label("Give it another shot?", id="play-again-msg", classes="play-again-msg")
-                yield ListView(
-                    ListItem(Label("Yes"), id="yes"),
-                    ListItem(Label("No"), id="no"),
-                    id="play-again-list",
-                    classes="play-again-list"
-                )
 
-            with HorizontalGroup(id="win-info-container", classes="win-info-container"):
-                yield Label(f"Time: {self.time}", id="round-time", classes="round-time")
-                yield Label(f"Score: {self.score}", id="round-score", classes="round-score")
+                yield Label("Give it another shot?", id="play-again-msg", classes="play-again-msg")
+                    
+                with HorizontalGroup(id="play-again-list-container", classes="play-again-list-container"):
+                    yield ListView(
+                        ListItem(Label("Yes"), id="yes", classes="play-again-option"),
+                        ListItem(Label("No"), id="no", classes="play-again-option"),
+                        id="play-again-list",
+                        classes="play-again-list"
+                    )
+
+        with HorizontalGroup(id="win-info-container", classes="win-info-container"):
+            yield Label(f"Time: {self.time} seconds", id="round-time", classes="round-time")
+            yield Label(f"Score: {self.score} pts", id="round-score", classes="round-score")
 
     def save_score(self) -> None:
         score_msg = ""

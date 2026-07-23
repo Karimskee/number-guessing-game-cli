@@ -80,3 +80,68 @@ GameScreen {
         }
     }
 }
+
+WinScreen {
+    padding: 2;
+
+    .remaining-chances {
+        # background: cyan;
+        text-align: left;
+    }
+
+    .screen-container {
+        align: center middle;
+
+        .win-msg-container {
+            # background: yellow;
+            height: 15%;
+    
+            .win-msg {
+                color: green;
+            }
+        }
+
+        .play-again-container {
+            # background: green;
+            height: 25%;
+
+            margin: 2 0 0 0;
+            align: center middle;
+            content-align: center middle;
+    
+            .play-again-msg {
+                height: 2;
+                text-align: center;
+            }
+            
+            .play-again-list-container {
+                align: center middle;
+
+                .play-again-list {
+                    width: 20;
+                    height: 2;
+    
+                    .play-again-option {
+                        
+                    }
+                }        
+            }
+        }
+    }
+
+    .win-info-container {
+        # background: red;
+
+        content-align: center bottom;
+
+        .round-time {
+            width: 50%;
+            text-align: left;
+        }
+    
+        .round-score {
+            width: 50%;
+            text-align: right;
+        }
+    }
+}
