@@ -12,6 +12,7 @@ Button {
 WelcomeScreen {
     VerticalScroll {
         align: center middle;
+
         .header, .explain, .prompt {
             margin: 2 0;
         }
@@ -23,6 +24,43 @@ WelcomeScreen {
         .difficulty-options {
             margin: 1 0;
             align: center middle;
+        }
+    }
+}
+
+GameScreen {
+
+    .remaining-chances {
+        text-align: left;
+    }
+
+    VerticalScroll {
+        align: center middle;
+
+        HorizontalGroup {
+            width: 100%;
+            align: center middle;
+    
+            .guess-prompt {
+                width: auto;
+                height: 3;
+                content-align: center middle;
+            }
+        
+            .guess-input {
+                height: 3;
+                width: 10;
+            }
+        }
+
+        .invalid-label {
+            display: none;
+            color: red;
+        }
+
+        .incorrect-guess {
+            display: none;
+            color: red;
         }
     }
 }

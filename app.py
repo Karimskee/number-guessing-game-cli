@@ -13,8 +13,8 @@ continue until the user runs out of chances.
 from textual.app import App, ComposeResult
 from textual.screen import Screen
 from textual.reactive import reactive
-from textual.containers import HorizontalGroup, VerticalScroll, VerticalGroup
-from textual.widgets import Static, Input, Select, Button, Label, Footer, Header
+from textual.containers import HorizontalGroup, VerticalScroll, VerticalGroup, Horizontal
+from textual.widgets import Static, MaskedInput, Input, Select, Button, Label, Footer, Header
 
 from getpass import getuser  # Getting system username
 import json
@@ -283,10 +283,104 @@ class WelcomeScreen(Screen):
 class GameScreen(Screen):
     """Guessing game screen."""
 
+    rem_chances = reactive(0)
+
+    def on_mount(self):
+        self.rem_chances = self.app.round_difficulty.get("chances")
+        self.target_number = randint(1, 100)
+        self.guessed_number = 0
+        self.attempts = 0
+        self.time = 0
+        self.invalid_label = self.query_one("#invalid-label", Label)
+        self.incorrect_guess = self.query_one("#incorrect-guess", Label)
+        self.notify(f"{self.target_number}")
+        self.query_one("#guess-input", MaskedInput).focus()
+
     def compose(self) -> ComposeResult:
         """Called to add widgets to this container."""
-        yield Label("Successfully switched to game screen!")
-        yield Label(f"Round difficulty: {self.app.round_difficulty.get("title")}", classes="round-difficulty")
+
+        yield Label("Remaining Chances: ", id="remaining-chances", classes="remaining-chances")
+
+        with VerticalScroll():
+
+            with HorizontalGroup():
+                yield Label("Enter your guess: ", classes="guess-prompt")
+                yield MaskedInput("000", placeholder="000", id="guess-input", classes="guess-input")
+            
+            yield Label("Invalid input.\nPlease enter a numeric value in the range of [1, 100].", id="invalid-label", classes="invalid-label")
+            yield Label(f"Incorrect! The number is greater than INPUT.", id="incorrect-guess", classes="incorrect-guess")
+    
+    def on_input_submitted(self, event: MaskedInput.Submitted):
+        if event.input.id != "guess-input": return
+
+        self.guessed_number = int(event.value)
+        
+        if not (1 <= self.guessed_number <= 100):
+            self.invalid_guess()
+        else:
+            self.check_guessed_number()
+
+        if self.rem_chances == 0:
+            self.update_global_vars()
+            self.app.switch_screen("loss")
+
+    def invalid_guess(self):
+        self.incorrect_guess.display = False
+        self.invalid_label.display = True
+
+    def check_guessed_number(self):
+        self.invalid_label.display = False
+
+        if self.guessed_number == self.target_number:
+            self.update_global_vars()
+            self.app.switch_screen("win")
+            return
+
+        self.incorrect_guess.update(f"Incorrect! The number is {'greater' if self.guessed_number < self.target_number else 'less'} than {self.guessed_number}.")
+        self.incorrect_guess.display = True
+        self.rem_chances -= 1
+        self.attempts += 1
+
+    def watch_rem_chances(self, value: int):
+        rem_chances_label = self.query_one("#remaining-chances", Label)
+        rem_chances_label.update(f"Remaining Chances: {value}")
+
+    def update_global_vars(self):
+        self.app.round_attempts = self.attempts
+        self.app.round_target_number = self.target_number
+        self.app.round_time = self.time
+        self.app.round_rem_chances = self.rem_chances
+        self.app.round_guessed_number = self.guessed_number
+
+
+class WinScreen(Screen):
+    """Game won screen."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.rem_chances = self.app.round_rem_chances
+        self.attempts = self.app.round_attempts
+        self.time = self.app.round_time
+
+    def on_mount(self):
+        pass
+
+    def compose(self) -> ComposeResult:
+        """Called to add widgets to this container."""
+
+        yield Label(f"Congratulations! You guessed the correct number in {self.attempts} attempt/s.")
+
+
+class LossScreen(Screen):
+    """Game loss screen."""
+
+    def on_mount(self):
+        pass
+
+    def compose(self) -> ComposeResult:
+        """Called to add widgets to this container."""
+
+        yield Label(f"You ran out of chances! The correct number was {self.app.round_target_number}.")
 
 
 class DifficultyButton(Button):
@@ -317,7 +411,9 @@ class GuessingGameApp(App):
 
     SCREENS = {
         "welcome": WelcomeScreen,
-        "game": GameScreen
+        "game": GameScreen,
+        "win": WinScreen,
+        "loss": LossScreen
     }
 
     # Difficulties dictionary
@@ -331,6 +427,12 @@ class GuessingGameApp(App):
 
     SCORES_FILE = "scores.json"
     hint_on_chance = -1  # Give a hint once rem chances is equal to this value
+
+    round_attempts = 0
+    round_target_number = 0
+    round_time = 0.0
+    round_rem_chances = 0
+    round_guessed_number = 0
     
     # def compose(self) -> ComposeResult:
     #     """Called to add widgets to the app."""
@@ -343,3 +445,6 @@ class GuessingGameApp(App):
 
 if __name__ == "__main__":
     GuessingGameApp().run()
+
+# RUN COMMAND
+# textual-hmr app.py:GuessingGameApp
