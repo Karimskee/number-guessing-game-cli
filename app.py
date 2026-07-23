@@ -14,13 +14,14 @@ from textual.app import App, ComposeResult
 from textual.screen import Screen
 from textual.reactive import reactive
 from textual.containers import HorizontalGroup, VerticalScroll, VerticalGroup, Horizontal
-from textual.widgets import Static, MaskedInput, Input, Select, Button, Label, Footer, Header, Digits
+from textual.widgets import Static, MaskedInput, Input, Select, Button, Label, Footer, Header, Digits, ListView, ListItem
 
 from getpass import getuser  # Getting system username
 import json
 from math import floor
-from random import randint
+from random import randint, seed
 from time import monotonic  # Calculating round time
+from time import sleep
 
 from helpers import clear_terminal
 
@@ -71,12 +72,15 @@ class GameScreen(Screen):
     rem_chances = reactive(0)
     time_before_round = reactive(monotonic)
     time = reactive(0.0)
-    target_number = randint(1, 100)
+    target_number = 0
     guessed_number = 0
     attempts = 1
 
     def on_mount(self):
         self.rem_chances = self.app.round_difficulty.get("chances")
+        self.time_before_round = monotonic()
+        self.target_number = randint(1, 100)
+        self.attempts = 1
 
         self.round_timer = self.query_one("#round-timer", Digits)
         self.invalid_label = self.query_one("#invalid-label", Label)
@@ -156,24 +160,98 @@ class GameScreen(Screen):
         self.app.round_guessed_number = self.guessed_number
         self.app.round_time = monotonic() - self.time_before_round
 
+    def on_unmount(self):
+        self.time_updater.stop()
+
 
 class WinScreen(Screen):
     """Game won screen."""
+
+    score = 0
+    SCORES_FILE = ""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.rem_chances = self.app.round_rem_chances
         self.attempts = self.app.round_attempts
         self.time = round(self.app.round_time, 2)
+        self.SCORES_FILE = self.app.SCORES_FILE
+
+        self.multiplier = self.app.round_difficulty.get("multiplier")
+        self.score = round(1 / (self.attempts * self.time) * 100 * self.multiplier, 2)
 
     def on_mount(self):
-        pass
+        self.save_score()
 
     def compose(self) -> ComposeResult:
         """Called to add widgets to this container."""
 
-        yield Label(f"Congratulations! You guessed the correct number in {self.attempts} attempt/s.")
-        yield Label(f"Time taken: {self.time} attempt/s.")
+        with VerticalScroll():
+
+            yield Label(f"Remaining Chances: {self.rem_chances}", id="remaining-chances", classes="remaining-chances")
+
+            with VerticalGroup(id="win-msg-container", classes="win-msg-container"):
+                at = self.attempts
+                yield Label(f"Congratulations you won!\nYou guessed the correct number in {at} {"attempt" if at == 1 else "attempts"}.", id="win-msg", classes="win-msg")
+
+            with VerticalGroup(id="play-again-container", classes="play-again-container"):
+                yield Label("Give it another shot?", id="play-again-msg", classes="play-again-msg")
+                yield ListView(
+                    ListItem(Label("Yes"), id="yes"),
+                    ListItem(Label("No"), id="no"),
+                    id="play-again-list",
+                    classes="play-again-list"
+                )
+
+            with HorizontalGroup(id="win-info-container", classes="win-info-container"):
+                yield Label(f"Time: {self.time}", id="round-time", classes="round-time")
+                yield Label(f"Score: {self.score}", id="round-score", classes="round-score")
+
+    def save_score(self) -> None:
+        score_msg = ""
+        # Retrieve scores data
+        # # Ensure file exists
+        try:
+            open(file=self.SCORES_FILE, mode="r", encoding="utf-8")
+        except FileNotFoundError:
+            file = open(file=self.SCORES_FILE, mode="w", encoding="utf-8")
+            json.dump(fp=file, obj=[])
+    
+        # Get scores
+        with open(file=self.SCORES_FILE, mode="r", encoding="utf-8") as file:
+            try:
+                all_scores = json.load(fp=file)
+            except json.decoder.JSONDecodeError:
+                all_scores = []
+    
+        # If a new high score
+        if len(all_scores) > 0:
+            highest_score = all_scores[0].get("score")
+    
+            if self.score > highest_score:
+                score_msg = "You have got a new high score!"
+            elif self.score == highest_score:
+                score_msg = "Woh, you have got the exact same score as the current highest one!\n\nthat's a very rare chance, you are a lucky one!"
+    
+        # Insert score
+        all_scores.append({"username": getuser(), "score": self.score})
+    
+        # Sort scores
+        all_scores.sort(key=lambda x: x.get("score"), reverse=True)
+    
+        # Save score
+        with open(file=self.SCORES_FILE, mode="w", encoding="utf-8") as file:
+            json.dump(obj=all_scores, fp=file, indent=4)
+            self.notify(f"Score has been saved with the name: {getuser()}")
+
+        if score_msg:
+            self.notify(score_msg, timeout=7)
+
+    def on_list_view_selected(self, event: ListView.Selected) -> None:
+        if event.item.id == "yes":
+            self.app.restart_game()
+        else:
+            self.app.switch_screen("exit")
 
 
 class LossScreen(Screen):
@@ -186,6 +264,24 @@ class LossScreen(Screen):
         """Called to add widgets to this container."""
 
         yield Label(f"You ran out of chances! The correct number was {self.app.round_target_number}.")
+
+
+class ExitScreen(Screen):
+    """Game exit screen."""
+
+    def compose(self) -> ComposeResult:
+        """Called to add widgets to this container."""
+
+        yield Label("Goodbye!")
+
+
+class LoadingScreen(Screen):
+    """Game loading screen."""
+
+    def compose(self) -> ComposeResult:
+        """Called to add widgets to this container."""
+
+        yield Label("Loading...", id="loading-label", classes="loading-label")
 
 
 class DifficultyButton(Button):
@@ -214,13 +310,6 @@ class GuessingGameApp(App):
 
     CSS_PATH = "style.tcss"
 
-    SCREENS = {
-        "welcome": WelcomeScreen,
-        "game": GameScreen,
-        "win": WinScreen,
-        "loss": LossScreen
-    }
-
     # Difficulties dictionary
     difficulty_levels = [
         {"title": "easy", "chances": 10, "multiplier": 1, "color": "green"},
@@ -240,7 +329,32 @@ class GuessingGameApp(App):
     round_guessed_number = 0
 
     def on_mount(self):
-        self.push_screen(screen="welcome")
+        self.install_screens()
+        self.push_screen("welcome")
+
+    def restart_game(self):
+        self.uninstall_screens()
+        self.install_screens()
+        self.push_screen("welcome")
+
+    def install_screens(self):
+        self.install_screen(WelcomeScreen, "welcome")
+        self.install_screen(GameScreen, "game")
+        self.install_screen(WinScreen, "win")
+        self.install_screen(LossScreen, "loss")
+        self.install_screen(ExitScreen, "exit")
+
+        if not self.is_screen_installed("loading"):
+            self.install_screen(LoadingScreen, "loading")
+
+    def uninstall_screens(self):
+        self.switch_screen("loading")
+
+        self.uninstall_screen("welcome")
+        self.uninstall_screen("game")
+        self.uninstall_screen("win")
+        self.uninstall_screen("loss")
+        self.uninstall_screen("exit")
 
 
 if __name__ == "__main__":
