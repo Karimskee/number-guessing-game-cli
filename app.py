@@ -289,7 +289,7 @@ class GameScreen(Screen):
         self.rem_chances = self.app.round_difficulty.get("chances")
         self.target_number = randint(1, 100)
         self.guessed_number = 0
-        self.attempts = 0
+        self.attempts = 1
         self.time = 0
         self.invalid_label = self.query_one("#invalid-label", Label)
         self.incorrect_guess = self.query_one("#incorrect-guess", Label)
