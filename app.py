@@ -14,13 +14,13 @@ from textual.app import App, ComposeResult
 from textual.screen import Screen
 from textual.reactive import reactive
 from textual.containers import HorizontalGroup, VerticalScroll, VerticalGroup, Horizontal
-from textual.widgets import Static, MaskedInput, Input, Select, Button, Label, Footer, Header
+from textual.widgets import Static, MaskedInput, Input, Select, Button, Label, Footer, Header, Digits
 
 from getpass import getuser  # Getting system username
 import json
 from math import floor
 from random import randint
-import time  # Calculating round time
+from time import monotonic  # Calculating round time
 
 from helpers import clear_terminal
 
@@ -69,22 +69,30 @@ class GameScreen(Screen):
     """Guessing game screen."""
 
     rem_chances = reactive(0)
+    time_before_round = reactive(monotonic)
+    time = reactive(0.0)
+    target_number = randint(1, 100)
+    guessed_number = 0
+    attempts = 1
 
     def on_mount(self):
         self.rem_chances = self.app.round_difficulty.get("chances")
-        self.target_number = randint(1, 100)
-        self.guessed_number = 0
-        self.attempts = 1
-        self.time = 0
+
+        self.round_timer = self.query_one("#round-timer", Digits)
         self.invalid_label = self.query_one("#invalid-label", Label)
         self.incorrect_guess = self.query_one("#incorrect-guess", Label)
-        self.notify(f"{self.target_number}")
+
+        self.notify(f"[TESTING] Target Number: {self.target_number}")
+
+        self.time_updater = self.set_interval(1 / 60, self.update_time)
         self.query_one("#guess-input", MaskedInput).focus()
 
     def compose(self) -> ComposeResult:
         """Called to add widgets to this container."""
 
-        yield Label("Remaining Chances: ", id="remaining-chances", classes="remaining-chances")
+        with HorizontalGroup():
+            yield Label("Remaining Chances: ", id="remaining-chances", classes="remaining-chances")
+            yield Digits(value="00:00", id="round-timer", classes="round-timer")
 
         with VerticalScroll():
 
@@ -95,6 +103,17 @@ class GameScreen(Screen):
             yield Label("Invalid input.\nPlease enter a numeric value in the range of [1, 100].", id="invalid-label", classes="invalid-label")
             yield Label(f"Incorrect! The number is greater than INPUT.", id="incorrect-guess", classes="incorrect-guess")
     
+    def update_time(self) -> None:
+        self.time = monotonic() - self.time_before_round
+
+    def watch_time(self, time: float) -> None:
+        hours = floor(time / 3600)
+        minutes = floor((time - hours * 3600) / 60)
+        seconds = floor(time - hours * 3600 - minutes * 60)
+        milliseconds = floor((time - hours * 3600 - minutes * 60 - seconds) * 100)
+
+        self.round_timer.update(f"{hours:02d}:{minutes:02d}:{seconds:02d}:{milliseconds:02d}")
+
     def on_input_submitted(self, event: MaskedInput.Submitted):
         if event.input.id != "guess-input": return
 
@@ -133,9 +152,9 @@ class GameScreen(Screen):
     def update_global_vars(self):
         self.app.round_attempts = self.attempts
         self.app.round_target_number = self.target_number
-        self.app.round_time = self.time
         self.app.round_rem_chances = self.rem_chances
         self.app.round_guessed_number = self.guessed_number
+        self.app.round_time = monotonic() - self.time_before_round
 
 
 class WinScreen(Screen):
@@ -145,7 +164,7 @@ class WinScreen(Screen):
         super().__init__(**kwargs)
         self.rem_chances = self.app.round_rem_chances
         self.attempts = self.app.round_attempts
-        self.time = self.app.round_time
+        self.time = round(self.app.round_time, 2)
 
     def on_mount(self):
         pass
@@ -154,6 +173,7 @@ class WinScreen(Screen):
         """Called to add widgets to this container."""
 
         yield Label(f"Congratulations! You guessed the correct number in {self.attempts} attempt/s.")
+        yield Label(f"Time taken: {self.time} attempt/s.")
 
 
 class LossScreen(Screen):

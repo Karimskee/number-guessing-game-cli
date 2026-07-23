@@ -10,6 +10,8 @@ Button {
 }
 
 WelcomeScreen {
+    padding: 2;
+
     VerticalScroll {
         align: center middle;
 
@@ -29,13 +31,27 @@ WelcomeScreen {
 }
 
 GameScreen {
+    padding: 2;
 
-    .remaining-chances {
-        text-align: left;
+    HorizontalGroup {
+        margin: 0 0 10 0;
+
+        .remaining-chances {
+            width: 50%;
+            text-align: left;
+            content-align: left middle;
+            height: 3;
+        }
+    
+        .round-timer {
+            text-align: right;
+            color: $foreground-muted;
+            height: 3;
+        }
     }
 
     VerticalScroll {
-        align: center middle;
+        align: center top;
 
         HorizontalGroup {
             width: 100%;
